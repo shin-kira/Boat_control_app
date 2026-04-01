@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boat Nile Control Interface</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="stat-box">LOCATION: <span id="stat-gps">PENDING</span></div>
+        <div class="stat-box">MASS: <span id="stat-mass">PENDING</span></div>
+        <div class="stat-box">BATTERY: <span id="stat-batt">PENDING</span></div>
+    </header>
+
+    <div class="dashboard">
+        <div class="control-lane">
+            <div class="status-group">
+                <p>Status: <span id="conn-status">Checking...</span></p>
+                <p>Firebase: <span id="db-status">Connected</span></p>
+            </div>
+            
+            <div class="slider-container">
+                <div class="slider-axis">
+                    <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
+                </div>
+                <div class="slider-wrapper">
+                    <div class="value-bubble" id="bubbleLeft">0</div>
+                    <input type="range" min="0" max="100" value="0" class="vertical-slider" id="sliderLeft">
+                </div>
+            </div>
+            <span class="label">LEFT THROTTLE</span>
+        </div>
+
+        <div class="camera-container">
+            <div class="camera-header">LIVE FEED: BOAT_01</div>
+            <div class="feed-view">
+                <img src="" alt="Click Connect to Start Stream" id="esp32-feed">
+            </div>
+            <div class="camera-setup">
+                <input type="text" id="camIp" value="192.168.1.9" placeholder="Enter IP">
+                <button onclick="connectStream()">CONNECT FEED</button>
+            </div>
+            <div class="LOG" id="LOG"></div>
+        </div>
+
+        <div class="control-lane">
+            <div class="class-table-header">AI Classifications:</div>
+            <div class="class-table" id="class-scroll">
+                <ul id="detection-list"><li>Awaiting Data...</li></ul>
+            </div>
+            
+            <div class="slider-container">
+                <div class="slider-axis">
+                    <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
+                </div>
+                <div class="slider-wrapper">
+                    <div class="value-bubble" id="bubbleRight">0</div>
+                    <input type="range" min="0" max="100" value="0" class="vertical-slider" id="sliderRight">
+                </div>
+            </div>
+            <span class="label">RIGHT THROTTLE</span>
+
+            <div class="relay-group">
+                <button class="relay-button" id="relayBtn">
+                    <div class="indicator"></div>
+                    <span id="rel_mode">OFF</span>
+                </button>
+                <span class="label">RELAY SYSTEM</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
