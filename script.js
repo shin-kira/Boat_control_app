@@ -11,7 +11,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 // --- 2. CONFIGURATION & GLOBALS ---
-const CAMERA_IP = "192.168.1.6"; // Hardcoded as requested
+const CAMERA_IP = "192.168.43.235"; // Hardcoded as requested
 
 document.addEventListener('DOMContentLoaded', () => {
     // Setup Throttle Sliders
