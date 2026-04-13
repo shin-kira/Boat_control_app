@@ -10,9 +10,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// --- 2. CONFIGURATION & GLOBALS ---
-const CAMERA_IP = "192.168.1.9"; // Hardcoded as requested
-
+// --- 2. INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     // Setup Throttle Sliders
     initSlider('sliderLeft', 'bubbleLeft', 'leftThrottle');
@@ -21,10 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup Relay Toggle
     initRelay();
 
-    // Start listening for Boat Data (GPS, Weight)
+    // Setup Reverse Button
+    initRev();
+
+    // Start listening for Boat Data (GPS, Weight, Battery)
     initStatusSync();
 
-    // Auto-Connect Camera on Startup
+    // Connect to camera using the default value in the input box after 1 second
     setTimeout(connectStream, 1000); 
 
     logEvent("SYSTEM: Dashboard Handshake Complete");
@@ -35,6 +36,8 @@ function initSlider(id, bubbleId, dbKey) {
     const slider = document.getElementById(id);
     const bubble = document.getElementById(bubbleId);
     
+    if (!slider || !bubble) return;
+
     slider.addEventListener('input', () => {
         const val = slider.value;
         bubble.innerText = val;
@@ -48,6 +51,8 @@ function initSlider(id, bubbleId, dbKey) {
 function initRelay() {
     const btn = document.getElementById('relayBtn');
     const txt = document.getElementById('rel_mode');
+
+    if (!btn || !txt) return;
 
     db.ref('controls/relay').on('value', (snapshot) => {
         const val = snapshot.val();
@@ -63,26 +68,61 @@ function initRelay() {
     });
 }
 
-// --- 5. CAMERA FEED (Hardcoded IP) ---
+// --- 5. DIRECTION (REVERSE) CONTROL ---
+function initRev() {
+    const btn = document.getElementById('revBtn');
+    const txt = document.getElementById('rev_mode');
+    
+    if (!btn || !txt) return;
+
+    db.ref('controls/Drive').on('value', (snapshot) => {
+        const val = snapshot.val();
+        const isDrive = (val === 1);
+        
+        btn.className = isDrive ? "relv-button active" : "relv-button";
+        txt.innerText = isDrive ? "Drive" : "Reverse";
+    });
+
+    btn.addEventListener('click', () => {
+        // Toggle: if "Drive" (1), set to 0. If "Reverse" (0), set to 1.
+        const currentState = txt.innerText === "Drive" ? 1 : 0;
+        const nextState = currentState === 1 ? 0 : 1;
+        db.ref('controls/Drive').set(nextState);
+    });
+}
+
+// --- 6. CAMERA FEED (DIRECT ESP32-CAM) ---
 function connectStream() {
     const feed = document.getElementById('esp32-feed');
-    logEvent(`CAMERA: Connecting to http://${CAMERA_IP}:81/stream...`);
+    const ipInput = document.getElementById('camIp').value.trim();
 
-    // Try Port 81 first (MJPEG Standard)
-    feed.src = `http://${CAMERA_IP}:81/stream`;
+    if (!ipInput) {
+        logEvent("✗ CAMERA: No IP address detected.");
+        return;
+    }
+
+    logEvent(`CAMERA: Connecting to ESP32 at http://${ipInput}:81/stream`);
+
+    /**
+     * NOTE: Most ESP32-CAM firmware (Arduino Example) 
+     * serves the MJPEG stream on Port 81 at /stream.
+     * If yours is different, change ":81/stream" below.
+     */
+    const videoFeedUrl = `http://${ipInput}:81/stream`;
+    
+    feed.src = videoFeedUrl;
+
+    feed.onload = () => {
+        logEvent("✓ CAMERA: Stream connected successfully!");
+    };
 
     feed.onerror = () => {
-        // Fallback to Port 80 if 81 fails
-        if (feed.src.includes(":81")) {
-            logEvent("CAMERA: Port 81 failed, trying Port 80...");
-            feed.src = `http://${CAMERA_IP}/stream`;
-        } else {
-            logEvent("CAMERA: Connection error. Check ESP32-CAM power.");
-        }
+        logEvent(`✗ CAMERA: Failed to connect to ${ipInput}.`);
+        logEvent("TIP: Ensure ESP32 is on and check port (81 or 80).");
     };
 }
 
-// --- 6. REAL-TIME STATUS (GPS & WEIGHT) ---
+// --- 7. REAL-TIME STATUS SYNC ---
 function initStatusSync() {
     db.ref('/').on('value', (snapshot) => {
         const data = snapshot.val();
@@ -102,17 +142,21 @@ function initStatusSync() {
                 updateStatUI('stat-mass', data.weight, " KG");
             }
 
-            // Update Battery (optional placeholder)
+            // Update Battery
             if (data.battery !== undefined) {
                 updateStatUI('stat-batt', data.battery, "%");
             }
         }
+    }, (error) => {
+        logEvent("✗ FIREBASE: " + error.message);
     });
 }
 
-// --- 7. UTILITIES ---
+// --- 8. UTILITIES ---
 function updateStatUI(id, value, unit = "") {
     const el = document.getElementById(id);
+    if (!el) return;
+
     if (value !== null && value !== undefined && value !== "") {
         el.innerText = value + unit;
         el.style.color = "#38bdf8";
@@ -124,9 +168,13 @@ function updateStatUI(id, value, unit = "") {
 
 function logEvent(msg) {
     const log = document.getElementById('LOG');
+    if (!log) return;
+    
     const time = new Date().toLocaleTimeString().split(' ')[0];
     const div = document.createElement('div');
+    div.style.marginBottom = "2px";
     div.innerHTML = `<span style="color:#64748b">[${time}]</span> ${msg}`;
+    
     log.appendChild(div);
     log.scrollTop = log.scrollHeight;
 }
