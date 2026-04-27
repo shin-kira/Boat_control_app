@@ -43,21 +43,22 @@
         </div>
 
         <div class="camera-container">
-            <div class="camera-header">LIVE FEED: BOAT_01</div>
+            <div class="camera-header">LIVE FEED: BOAT_01 + AI_PROCESSING</div>
             <div class="feed-view">
-                <img src="" alt="Click Connect to Start Stream" id="esp32-feed">
+                <img src="/video_feed" alt="Waiting for AI Stream..." id="esp32-feed" >
             </div>
             <div class="camera-setup">
-                <input type="text" id="camIp" value="192.168.1.9" placeholder="Enter IP">
-                <button onclick="connectStream()">CONNECT FEED</button>
+                <input type="text" id="camIp" value="192.168.1.8" placeholder="ESP32 IP">
+                <button onclick="setCameraIP()">SET CAMERA</button>
             </div>
+            <div id="classification-display" style="text-align: center; padding: 10px; font-size: 18px; font-weight: bold; color: #64748b; margin: 10px 0;">Class: Waiting...</div>
             <div class="LOG" id="LOG"></div>
         </div>
 
         <div class="control-lane">
             <div class="class-table-header">AI Classifications:</div>
             <div class="class-table" id="class-scroll">
-                <ul id="detection-list"><li>Awaiting Data...</li></ul>
+                <ul id="detection-list"><li>System Operational...</li></ul>
             </div>
             
             <div class="slider-container">
